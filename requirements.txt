@@ -1,0 +1,16 @@
+# Packages this project needs.
+# Install with:  pip install -r requirements.txt
+
+arxiv>=2.1.0        # talks to the arXiv API (fetches papers, downloads PDFs)
+pydantic>=2.0       # gives each paper a clean, checked structure
+pyyaml>=6.0         # reads our config/settings.yaml file
+# --- scoring layer (added) ---
+pymupdf>=1.24        # read PDF text (imported as 'fitz')
+langgraph>=0.2       # wires the 3 agents into a sequential pipeline
+langchain-groq>=0.2  # Agent C — the LLM judge (uses your free Groq key)
+tavily-python>=0.5   # Agent B — web search (uses your free Tavily key)
+python-dotenv>=1.0   # loads GROQ/TAVILY/GITHUB keys from a .env file
+
+# --- parallel execution layer (added) ---
+celery>=5.3         # task queue for parallel paper scoring
+redis>=5.0          # broker + result backend for celery

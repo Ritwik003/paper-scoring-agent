@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Project data (large and regenerable)
+data/
+
+# Secrets (added later)
+.env
+
+# Editors
+.vscode/
+.idea/
+# Local Redis dump
+dump.rdb
+# Celery pidfiles
+celerybeat-schedule
+*.pid
+
+# --- added for publishing ---
+.env
+.env.*
+!.env.example
+*.bak*
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+langgraph_env*/
+node_modules/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.claude/
+.deepeval/
+.alpha/
+graphify-out/
+*.log
+*.db
+*.sqlite3
+celerybeat-schedule*
+storage/resumes/
+~$*
+.DS_Store

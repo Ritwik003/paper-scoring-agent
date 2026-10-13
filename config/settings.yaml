@@ -1,0 +1,98 @@
+# Declarative settings for the paper harvester.
+# Change categories, paths, or rate limits here — no code edits needed.
+
+arxiv:
+  categories:            # AI/ML domain
+    - cs.LG
+    - cs.AI
+    - cs.CL
+    - cs.CV
+    - stat.ML
+  delay_seconds: 3.0     # polite pause between API requests (arXiv asks for this)
+  page_size: 100         # results per API page
+  num_retries: 5
+  max_results: 5000      # safety cap for a single week
+
+paths:
+  pdf_dir: data/pdfs
+  metadata_dir: data/metadata
+  scores_dir: data/scores          # where per-paper scores are written
+  picks_dir: weekly_picks          # per-week folders of qualified papers (tracked in git)
+
+scoring:
+  # Weights for the 7 criteria. They sum to 1.0, so the final score stays on 1-10.
+  weights:
+    significance: 0.15
+    novelty: 0.15
+    methodology: 0.25
+    empirical: 0.15
+    reproducibility: 0.10
+    presentation: 0.10
+    ethics: 0.10
+  # Verdict cut-offs on the weighted total (out of 10).
+  verdict:
+    read_min: 6.0        # >= this  -> "read"  (these are the papers we publish)
+    skim_min: 5.0        # >= this  -> "skim", below -> "skip"
+  publish_min: 6.0       # only papers scoring >= this get pushed to the weekly repo
+
+  # LLM used by Agent C (the judge). Uses your free Groq key.
+  llm:
+    provider: groq
+    model: llama-3.3-70b-versatile
+    temperature: 0.0
+
+  # Web tools used by Agent B.
+  web:
+    tavily_max_results: 3
+    github_api: https://api.github.com
+    openalex_api: https://api.openalex.org
+
+  # Tavily call-reduction gate (Agent B only spends a Tavily call when it's
+  # actually likely to change the score). See tavily_gate.py for the logic.
+  tavily_gate:
+    enabled: true
+
+    # ---- Level 1: hard skips (paper isn't worth analyzing) ----
+    min_sections_present: 5
+    min_tables_or_figures: 2
+    min_references: 10
+    min_char_count: 3000
+    min_similar_work: 3          # cheap-signal skip: niche topic, no one else works on it
+    obscure_not_found_days: 30   # OpenAlex not_found AND older than this -> skip
+    math_stat_only_categories: [math, stat]   # domain skip: categories only math.* / stat.*
+
+    # ---- Level 2: only call if it will plausibly change the score ----
+    min_cited_by_count: 3            # OpenAlex cited_by_count >=
+    min_influential_citations: 1     # Semantic Scholar influential_citations >=
+    min_github_stars: 10             # + repo must be "live"
+    hot_categories: [cs.AI, cs.CL, cs.LG, cs.CV, cs.MA]
+    hot_recency_days: 14
+    high_value_keywords:
+      - safety
+      - alignment
+      - evaluation
+      - benchmark
+      - hallucination
+      - reasoning
+      - agent
+      - rag
+      - multi-modal
+
+    # ---- Level 3: hard monthly budget cap ----
+    monthly_budget: 1000
+    soft_cap: 700          # below this -> allow freely (subject to Level 1/2)
+    hard_cap: 900          # 700-900 -> only "top decile" signal papers
+    reserved_for_important: 100   # last 100 calls of the month, force_important only
+    usage_file: data/tavily_usage.json
+
+    # What "top decile of Agent A/B signals" means, for the 700-900 band.
+    # A paper qualifies if it clears ALL of these on top of the Level 2 check.
+    top_decile:
+      min_references: 30
+      min_tables: 5
+      min_cited_by_count: 10
+
+    # ---- Level 4: per-run / per-week rate limit ----
+    weekly_run_cap: 50     # no single week burns more than 5% of monthly budget
+    weekly_usage_file: data/tavily_weekly_usage.json
+    max_consecutive_errors: 2   # disable Tavily for the rest of the run after this
